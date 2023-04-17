@@ -39,6 +39,8 @@ bower_components
 build/Release
 
 # Dependency directories
+SSL/
+public/
 node_modules/
 jspm_packages/
 
@@ -125,3 +127,6 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+#
+config.json
