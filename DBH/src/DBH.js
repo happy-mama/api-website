@@ -236,6 +236,15 @@ class DBH {
 
         // creates format que, checks formats params
         let que = []
+
+        if (!x.format) {
+            this.error("DBH.js:gen", x.name, "prop needs format object")
+        }
+
+        if (!Array.isArray(x.format)) {
+            this.error("DBH.js:gen", x.name, "prop format is not an Array")
+        }
+
         x.format.forEach(f => {
 
             if (!f.params) {
@@ -405,6 +414,17 @@ class DBH {
                                                 }
                                             }
                                         })
+
+                                    }
+
+                                } break;
+                                case "disableCopies": {
+
+                                    if (f.params.disableCopies) {
+
+                                        if (!this.config.gen.formats[f.type].params.disableCopies) {
+                                            this.warn(`${x.name}.${f.name}`, `params.disableCopies is not allowed in this format`)
+                                        }
 
                                     }
 

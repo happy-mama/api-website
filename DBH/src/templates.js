@@ -166,6 +166,17 @@ function createPost(x, f, p) {
         })
     }
 
+    let disableCopies = [``, ``]
+    if (f.params.disableCopies) {
+        disableCopies[0] = `global.dbh.${x.name}.$model.findOne(model).then(copy => {
+            if (copy) {
+                return reject("ECOPIESDISABLED")
+            }`
+        disableCopies[1] = `}).catch(e => {
+            return reject(e)
+        })`
+    }
+
     let rawF = `return new Promise((result, reject) => {
         ${checkRaw[0]}
             let model = ${JSON.stringify(rawModel)}
@@ -173,12 +184,14 @@ function createPost(x, f, p) {
             qNames.forEach(n => {
                 model[n] = q[n]
             });
+            ${disableCopies[0]}
             ${checkEquals[0]}
                 let m = new global.dbh.${x.name}.$model(model);
                 m.save()
                 ${saveCache}
                 result(m);
             ${checkEquals[1]}
+            ${disableCopies[1]}
         ${checkRaw[1]}
     });`
 
@@ -214,7 +227,6 @@ function createFind(x, f, p) {
             });
             global.dbh.${x.name}.$model.findOne(model).then(d => {
                 if (!d) {
-                    console.log(1)
                     reject(\`${"ENO" + x.name.toUpperCase()}\`)
                 } else {
                     ${saveCache}

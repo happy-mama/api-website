@@ -109,6 +109,162 @@ const props = {
             }
         ]
     },
+    commentsLikes: {
+        name: "commentsLikes",
+        cache: {
+            use: true,
+            identification: "_id",
+            time: 1000 * 60 * 5,
+            log: false
+        },
+        JWT: {
+            use: true,
+            string: "FAY1PgHoitbaFzYdIECt1odR",
+            time: 1000 * 60 * 24 * 7
+        },
+        DB: {
+            name: "CommentsLikes",
+            schema: {
+                data: {
+                    commentId: "string",
+                    authorId: "string"
+                },
+                params: {
+                    versionKey: false
+                }
+            }
+        },
+        format: [
+            {
+                name: "checkAll",
+                type: "check",
+                params: {}
+            }, {
+                name: "cache",
+                type: "cache",
+                params: {}
+            }, {
+                name: "create",
+                type: "post",
+                params: {
+                    cacheMethod: "cache"
+                }
+            }, {
+                name: "getById",
+                type: "getById",
+                params: {}
+            }
+        ]
+    },
+    postsLikes: {
+        name: "PostsLikes",
+        cache: {
+            use: true,
+            identification: "_id",
+            time: 1000 * 60 * 5,
+            log: false
+        },
+        JWT: {
+            use: true,
+            string: "FAY1PgHoitbaFzYdIECt1odR",
+            time: 1000 * 60 * 24 * 7
+        },
+        DB: {
+            name: "PostsLikes",
+            schema: {
+                data: {
+                    postId: "string",
+                    authorId: "string"
+                },
+                params: {
+                    versionKey: false
+                }
+            }
+        },
+        format: [
+            {
+                name: "checkAll",
+                type: "check",
+                params: {}
+            }, {
+                name: "cache",
+                type: "cache",
+                params: {}
+            }, {
+                name: "create",
+                type: "post",
+                params: {
+                    cacheMethod: "cache",
+                    checkMethod: "checkAll",
+                    disableCopies: true
+                } 
+            }, {
+                name: "get",
+                type: "get",
+                params: {
+                    cacheMethod: "cache",
+                    mainMethod: "find"
+                }
+            }, {
+                name: "find",
+                type: "find",
+                params: {}
+            }, {
+                name: "getById",
+                type: "getById",
+                params: {}
+            }
+        ]
+    },
+    postsComments: {
+        name: "postsComments",
+        cache: {
+            use: true,
+            identification: "_id",
+            time: 1000 * 60 * 5,
+            log: false
+        },
+        JWT: {
+            use: true,
+            string: "FAY1PgHoitbaFzYdIECt1odR",
+            time: 1000 * 60 * 24 * 7
+        },
+        DB: {
+            name: "PostsComments",
+            schema: {
+                data: {
+                    postId: "string",
+                    likes: "string",
+                    text: "string",
+                    authorId: "string"
+                },
+                params: {
+                    versionKey: false
+                }
+            }
+        },
+        format: [
+            {
+                name: "checkAll",
+                type: "check",
+                params: {}
+            }, {
+                name: "cache",
+                type: "cache",
+                params: {}
+            }, {
+                name: "create",
+                type: "post",
+                params: {
+                    cacheMethod: "cache"
+                }
+            }, {
+                name: "getById",
+                type: "getById",
+                params: {}
+            }
+        ]
+    },
     posts_main: {
         name: "main_Posts",
         cache: {
@@ -129,6 +285,8 @@ const props = {
                     createdAt: "string",
                     header: "string",
                     text: "string",
+                    comments: "number",
+                    likes: "number",
                     authorId: "string"
                 },
                 params: {
@@ -178,6 +336,8 @@ const props = {
                     createdAt: "string",
                     header: "string",
                     text: "string",
+                    comments: "number",
+                    likes: "number",
                     authorId: "string"
                 },
                 params: {

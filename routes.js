@@ -227,15 +227,13 @@ if (config.api.post.web_post) {
 			}
 		*/
 
-		console.log(req.body)
-
 		if (!req.body) {
 			return res.send({ "error": "ENOBODY" })
 		}
 
 		let threadPath = ""
 		if (!DBH[req.body.thread + "_Posts"]) {
-			return res.send({ "error": "ENOTHREAD"})
+			return res.send({ "error": "ENOTHREAD" })
 		} else {
 			threadPath = DBH[req.body.thread + "_Posts"]
 		}
@@ -245,13 +243,20 @@ if (config.api.post.web_post) {
 			req.body.data.authorId = User._id
 			req.body.data.createdAt = new Date().toISOString()
 
-			threadPath.createPost(req.body.data).then(Post => {
+			let post = Object.assign(req.body.data, {
+				likes: 0,
+				comments: 0
+			})
+
+			threadPath.createPost(post).then(Post => {
 
 				DBH.User.getById(Post.authorId).then(Author => {
 
 					let post = {
 						header: Post.header,
 						text: Post.text,
+						likes: Post.likes,
+						comments: Post.comments,
 						author: {
 							login: Author.login,
 							_id: Author._id
@@ -280,6 +285,52 @@ if (config.api.post.web_post) {
 	})
 }
 
+// POST /web/posts/like
+console.log("/web/posts/like POST", config.api.post.web_post_like)
+if (config.api.post.web_post_like) {
+	router.post("/web/posts/like", (req, res) => {
+
+		if (!req.body) {
+			return res.send({ "error": "EBADQUERY" })
+		}
+
+		let threadPath = ""
+		if (!DBH[req.body.thread + "_Posts"]) {
+			return res.send({ "error": "ENOTHREAD" })
+		} else {
+			threadPath = DBH[req.body.thread + "_Posts"]
+		}
+
+		DBH.User.authJWT(req.body.auth).then(User => {
+
+			threadPath.getById(req.body.postId).then(Post => {
+
+				DBH.PostsLikes.create({ postId: req.body.postId, authorId: String(User._id) }).then(Like => {
+
+					Post.likes += 1
+					Post.save()
+					res.send("ok")
+
+				}).catch(e => {
+					res.send({ "error": e })
+				})
+
+			}).catch(e => {
+				res.send({ "error": e })
+			})
+
+		}).catch(e => {
+			res.send({ "error": e })
+		})
+
+	})
+
+} else {
+	router.post("/web/posts/like", (req, res) => {
+		res.send({ "error": "EROUTEISOFF" })
+	})
+}
+
 // GET /web/posts
 console.log("/web/posts GET", config.api.get.web_posts)
 if (config.api.get.web_posts) {
@@ -304,7 +355,7 @@ if (config.api.get.web_posts) {
 
 		let threadPath = ""
 		if (!DBH[req.query.thread + "_Posts"]) {
-			return res.send({ "error": "ENOTHREAD"})
+			return res.send({ "error": "ENOTHREAD" })
 		} else {
 			threadPath = DBH[req.query.thread + "_Posts"]
 		}
@@ -320,7 +371,17 @@ if (config.api.get.web_posts) {
 					let t = {
 						header: post.header,
 						text: post.text,
+						likes: post.likes,
+						comments: post.comments,
 						_id: post._id
+					}
+
+					if (post.likes) {
+						await DBH.PostsLikes.get({ postId: post._id, authorId: post.authorId }).then(like => {
+
+							t.myLike = true
+
+						}).catch(e => {})
 					}
 
 					await DBH.User.getById(post.authorId).then(Author => {
