@@ -56,18 +56,22 @@ function createCheck(x, f, p) {
     const RULE = rules.join("&&")
     const TYPEOF_RULE = typeof_rules.join("&&")
 
+    const q_ERROR = f.errors.q || `ECHECK:!q`
+    const RULE_ERROR = f.errors.RULE || `ECHECK:${f.name}_RULE`
+    const TYPEOF_RULE_ERROR = f.errors.TYPEOF_RULE || `ECHECK:${f.name}_TYPEOF_RULE`
+
     let rawF = `
     return new Promise((result, reject) => {
         if (!q) {
-            return reject(\`ECHECK: !q\`)
+            return reject("${q_ERROR}")
         }
 
         if (!(${RULE})) {
-            return reject(\`ECHECK: ${f.name}_RULE\`)
+            return reject("${RULE_ERROR}")
         }
 
         if (!(${TYPEOF_RULE})) {
-            return reject(\`ECHECK: ${f.name}_TYPEOF_RULE\`)
+            return reject("${TYPEOF_RULE_ERROR}")
         }
 
         result()
@@ -90,10 +94,12 @@ function createGet(x, f, p) {
 
     let mainMethod = [`global.dbh.${x.name}.${f.params.mainMethod}(q).then(r => {`, "}).catch(e => { reject(e) })"]
 
+    const cacheRawE = x.format[f.params.cacheMethod].errors.main || `ENO${x.name.toUpperCase()}`
+
     let rawF = `return new Promise((result, reject) => {
         ${checkRaw[0]}
             ${cacheRaw[0]}
-                if (e == \`${"ENO" + x.name.toUpperCase()}\`) {
+                if (e == "${cacheRawE}") {
                     ${mainMethod[0]}
                         return result(r);
                     ${mainMethod[1]}
@@ -114,13 +120,15 @@ function createCache(x, f, p) {
         checkRaw = [`global.dbh.${x.name}.${f.params.checkMethod}(q).then(() => {`, "}).catch(e => { reject(e) })"]
     }
 
+    const mainError = f.errors.main || `ENO${x.name.toUpperCase()}`
+
     let rawF = `return new Promise((result, reject) => {
         ${checkRaw[0]}
             let r = global.dbh.${x.name}.$cache.map.get(q.${x.cache.identification})
             if (r) {
                 result(r);
             } else {
-                reject(\`${"ENO" + x.name.toUpperCase()}\`)
+                reject("${mainError}")
             }
         ${checkRaw[1]}
     })`
@@ -153,12 +161,18 @@ function createPost(x, f, p) {
     if (f.params.checkEquals) {
         f.params.checkEquals.forEach(equal => {
 
+            let checkEqualsE = `EBUSY:${equal}`
+
+            if (f.errors.checkEquals) {
+                checkEqualsE = f.errors.checkEquals.replace("%equal%", equal)
+            }
+
             if (!x.DB.schema.data[equal]) {
                 global.dbh.warn(x.name, `${f.name} format params.checkEquals[${equal}] is not defined in prop schema`)
             } else {
                 checkEquals[0] += `global.dbh.${x.name}.$model.findOne({"${equal}": q.${equal}}).then(z => {
                     if (z) {
-                        return reject(\`EBUSY:${equal}\`);
+                        return reject("${checkEqualsE}")
                     }`
                 checkEquals[1] += `}).catch(e => { return reject(e); });`
             }
@@ -168,9 +182,12 @@ function createPost(x, f, p) {
 
     let disableCopies = [``, ``]
     if (f.params.disableCopies) {
+
+        const disableCopiesE = f.errors.disableCopies || "ECOPIESDISABLED"
+
         disableCopies[0] = `global.dbh.${x.name}.$model.findOne(model).then(copy => {
             if (copy) {
-                return reject("ECOPIESDISABLED")
+                return reject("${disableCopiesE}")
             }`
         disableCopies[1] = `}).catch(e => {
             return reject(e)
@@ -185,12 +202,12 @@ function createPost(x, f, p) {
                 model[n] = q[n]
             });
             ${disableCopies[0]}
-            ${checkEquals[0]}
-                let m = new global.dbh.${x.name}.$model(model);
-                m.save()
-                ${saveCache}
-                result(m);
-            ${checkEquals[1]}
+                ${checkEquals[0]}
+                    let m = new global.dbh.${x.name}.$model(model);
+                    m.save()
+                    ${saveCache}
+                    result(m);
+                ${checkEquals[1]}
             ${disableCopies[1]}
         ${checkRaw[1]}
     });`
@@ -218,6 +235,8 @@ function createFind(x, f, p) {
         saveCache = `global.dbh.${x.name}.$cache.map.set(d.${x.cache.identification}, d);`
     }
 
+    const mainError = f.errors.main || `ENO${x.name.toUpperCase()}`
+
     let rawF = `return new Promise((result, reject) => {
         ${checkRaw[0]}
             let model = ${JSON.stringify(rawModel)}
@@ -227,7 +246,7 @@ function createFind(x, f, p) {
             });
             global.dbh.${x.name}.$model.findOne(model).then(d => {
                 if (!d) {
-                    reject(\`${"ENO" + x.name.toUpperCase()}\`)
+                    reject("${mainError}")
                 } else {
                     ${saveCache}
                     result(d);
@@ -263,13 +282,19 @@ function createPut(x, f, p) {
     if (f.params.checkEquals) {
         f.params.checkEquals.forEach(equal => {
 
+            let checkEqualsE = `EBUSY:${equal}`
+
+            if (f.errors.checkEquals) {
+                checkEqualsE = f.errors.checkEquals.replace("%equal%", equal)
+            }
+
             if (!x.DB.schema.data[equal]) {
                 global.dbh.warn(x.name, `${f.name} format params.checkEquals[${equal}] is not defined in prop schema`)
             } else {
                 checkEqualsStart += `global.dbh.${x.name}.$model.findOne({"${equal}": eFound.${equal}}).then(ch => {
                     if (ch) {
                         if (String(ch._id) != String(found._id)) {
-                            return reject(\`EBUSY:${equal}\`)
+                            return reject("${checkEqualsE}")
                         }
                     }`
                 checkEqualsEnd += `}).catch(e => { return reject(e) })`
@@ -280,9 +305,13 @@ function createPut(x, f, p) {
 
     let mainMethod = [`global.dbh.${x.name}.${f.params.mainMethod}`, ""]
 
+    const qE = f.errors.q || "ECHECK: q"
+    const mainE = f.errors.main || "EPARAMSBUSY"
+    const findE = x.format[f.params.mainMethod].errors.main || `ENO${x.name.toUpperCase()}`
+
     let rawF = `return new Promise((result, reject) => {
         if (!q) {
-            return reject(\`ECHECK: q\`)
+            return reject("${qE}")
         }
         ${checkRaw[0]}
             ${checkRaw[1]}
@@ -297,9 +326,9 @@ function createPut(x, f, p) {
                     })
                     ${checkEqualsStart}
                         ${mainMethod[0]}(eFound).then(x => {
-                            return reject(\`EPARAMSBUSY\`)
+                            return reject("${mainE}")
                         }).catch(e => {
-                            if (e == \`${"ENO" + x.name.toUpperCase()}\`) {
+                            if (e == "${findE}") {
                                 foundNames.forEach(n => {
                                     if (n != "_id") {
                                         found[n] = eFound[n]
@@ -341,7 +370,7 @@ function createDelete(x, f, p) {
                     ${deleteCache}
                     result()
                 }).catch(e => { reject(e); })
-            }).catch(e => { return reject(e); })
+            }).catch(e => { reject(e); })
         ${checkRaw[1]}
     });`
 
@@ -351,16 +380,20 @@ function createDelete(x, f, p) {
 
 function createGetJWT(x, f, p) {
 
+    const qE = f.errors.q || "ECHECK: !q"
+    const JWTstringE = f.errors.JWTstring || "ECHECK: JWT is not a string"
+    const JWTerrorE = f.errors.JWTerror || "EJWTERROR"
+
     let rawF = `return new Promise((result, reject) => {
         if (!q) {
-            return reject(\`ECHECK: !q\`)
+            return reject("${qE}")
         }
         if (typeof q != "string") {
-            return reject(\`ECHECK: JWT is not a string\`)
+            return reject("${JWTstringE}")
         }
         global.dbh.JWT.verify(q, "${p.$JWT.string}", function(err, decoded) {
             if (err) {
-                return reject(\`EJWTERROR\`)
+                return reject("${JWTerrorE}")
             }
             result(decoded.data)
         })
@@ -446,19 +479,22 @@ function createOutJWT(x, f, p) {
 
 function createGetById(x, f, p) {
 
+    const qE = f.errors.q || "ECHECK: !q"
+    const mainE = f.errors.main || `ENO${x.name.toUpperCase()}`
+
     let rawF = `return new Promise((result, reject) => {
         if (!q) {
-            return reject((\`ECHECK: !q\`))
+            return reject("${qE}")
         }
         q = String(q)
         global.dbh.${x.name}.$model.findById(q).then(data => {
             if (!data) {
-                return reject(\`${"ENO" + x.name.toUpperCase()}\`)
+                return reject("${mainE}")
             } else {
                 return result(data)
             }
         }).catch(e => {
-            return reject(\`${"ENO" + x.name.toUpperCase()}\`)
+            reject(e)
         })
     })`
 

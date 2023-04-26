@@ -27,87 +27,117 @@ const props = {
                 }
             }
         },
-        format: [
-            {
-                name: "checkUserAll",
+        format: {
+            checkUserAll: {
                 type: "check",
-                params: {}
-            }, {
-                name: "checkUserLorPE",
+                params: {},
+                errors: {
+                    q: "E_UserQ",
+                    TYPEOF_RULE: "E_UserTRE",
+                    RULE: "E_UserRE"
+                }
+            },
+            checkUserLorPE: {
                 type: "check",
                 params: {
                     rules: ["login|email", "password"]
                 }
-            }, {
-                name: "login",
+            },
+            login: {
                 type: "get",
                 params: {
                     checkMethod: "checkUserLorPE",
                     cacheMethod: "cacheUser",
                     mainMethod: "findUser",
                 }
-            }, {
-                name: "auth",
+            },
+            auth: {
                 type: "get",
                 params: {
                     cacheMethod: "cacheUser",
                     mainMethod: "findUser"
                 }
-            }, {
-                name: "authJWT",
+            },
+            authJWT: {
                 type: "inJWT",
                 params: {
                     mainMethod: "auth",
                     getJWTMethod: "getJWTUser"
                 }
-            }, {
-                name: "register",
+            },
+            register: {
                 type: "post",
                 params: {
+                    checkEquals: ["login", "email"],
                     checkMethod: "checkUserLorPE",
-                    cacheMethod: "cacheUser"
+                    cacheMethod: "cacheUser",
+                    disableCopies: true
+                },
+                errors: {
+                    disableCopies: "E_UserDC",
+                    checkEquals: "E_UserCE:%equal%"
                 }
-            }, {
-                name: "cacheUser",
+            },
+            cacheUser: {
                 type: "cache",
-                params: {}
-            }, {
-                name: "findUser",
+                params: {},
+                errors: {
+                    main: "E_UserNull"
+                }
+            },
+            findUser: {
                 type: "find",
-                params: {}
-            },{
-                name: "deleteUser",
+                params: {},
+                errors: {
+                    main: "E_UserNF"
+                }
+            },
+            deleteUser: {
                 type: "delete",
                 params: {
                     checkMethod: "checkUserAll",
                     mainMethod: "findUser"
                 }
-            }, {
-                name: "postJWTUser",
+            },
+            postJWTUser: {
                 type: "postJWT",
                 params: {
                     cacheMethod: "cacheUser"
                 }
-            }, {
-                name: "getJWTUser",
+            },
+            getJWTUser: {
                 type: "getJWT",
                 params: {
                     cacheMethod: "cacheUser"
+                },
+                errors: {
+                    q: "E_q",
+                    JWTstring: "E_UserJWTINAS",
+                    JWTerror: "E_UserJWTE"
                 }
-            }, {
-                name: "putUser",
+            },
+            putUser: {
                 type: "put",
                 params: {
                     checkMethod: "checkUserLorPE",
                     mainMethod: "findUser",
                     checkEquals: ["login", "email"]
+                },
+                errors: {
+                    main: "E_UserPB",
+                    q: "E_q",
+                    checkEquals: "E_UserCE:%equal%"
                 }
-            }, {
-                name: "getById",
+            },
+            getById: {
                 type: "getById",
-                params: {}
+                params: {},
+                errors: {
+                    q: "E_q",
+                    main: "E_UserNF"
+                }
             }
-        ]
+        }
     },
     commentsLikes: {
         name: "commentsLikes",
@@ -134,27 +164,26 @@ const props = {
                 }
             }
         },
-        format: [
-            {
-                name: "checkAll",
+        format: {
+            checkAll: {
                 type: "check",
                 params: {}
-            }, {
-                name: "cache",
+            },
+            cache: {
                 type: "cache",
                 params: {}
-            }, {
-                name: "create",
+            },
+            create: {
                 type: "post",
                 params: {
                     cacheMethod: "cache"
                 }
-            }, {
-                name: "getById",
+            },
+            getById: {
                 type: "getById",
                 params: {}
             }
-        ]
+        }
     },
     postsLikes: {
         name: "PostsLikes",
@@ -181,40 +210,39 @@ const props = {
                 }
             }
         },
-        format: [
-            {
-                name: "checkAll",
+        format: {
+            checkAll: {
                 type: "check",
                 params: {}
-            }, {
-                name: "cache",
+            },
+            cache: {
                 type: "cache",
                 params: {}
-            }, {
-                name: "create",
+            },
+            create: {
                 type: "post",
                 params: {
                     cacheMethod: "cache",
                     checkMethod: "checkAll",
                     disableCopies: true
-                } 
-            }, {
-                name: "get",
+                }
+            },
+            get: {
                 type: "get",
                 params: {
                     cacheMethod: "cache",
                     mainMethod: "find"
                 }
-            }, {
-                name: "find",
+            },
+            find: {
                 type: "find",
                 params: {}
-            }, {
-                name: "getById",
+            },
+            getById: {
                 type: "getById",
                 params: {}
             }
-        ]
+        }
     },
     postsComments: {
         name: "postsComments",
@@ -243,27 +271,26 @@ const props = {
                 }
             }
         },
-        format: [
-            {
-                name: "checkAll",
+        format: {
+            checkAll: {
                 type: "check",
                 params: {}
-            }, {
-                name: "cache",
+            },
+            cache: {
                 type: "cache",
                 params: {}
-            }, {
-                name: "create",
+            },
+            create: {
                 type: "post",
                 params: {
                     cacheMethod: "cache"
                 }
-            }, {
-                name: "getById",
+            },
+            getById: {
                 type: "getById",
                 params: {}
             }
-        ]
+        }
     },
     posts_main: {
         name: "main_Posts",
@@ -294,27 +321,26 @@ const props = {
                 }
             }
         },
-        format: [
-            {
-                name: "checkPostAll",
+        format: {
+            checkPostAll: {
                 type: "check",
                 params: {}
-            }, {
-                name: "cachePost",
+            },
+            cachePost: {
                 type: "cache",
                 params: {}
-            }, {
-                name: "createPost",
+            },
+            createPost: {
                 type: "post",
                 params: {
                     cacheMethod: "cachePost"
                 }
-            }, {
-                name: "getById",
+            },
+            getById: {
                 type: "getById",
                 params: {}
             }
-        ]
+        }
     },
     posts_test: {
         name: "test_Posts",
@@ -345,27 +371,26 @@ const props = {
                 }
             }
         },
-        format: [
-            {
-                name: "checkPostAll",
+        format: {
+            checkPostAll: {
                 type: "check",
                 params: {}
-            }, {
-                name: "cachePost",
+            },
+            cachePost: {
                 type: "cache",
                 params: {}
-            }, {
-                name: "createPost",
+            },
+            createPost: {
                 type: "post",
                 params: {
                     cacheMethod: "cachePost"
                 }
-            }, {
-                name: "getById",
+            },
+            getById: {
                 type: "getById",
                 params: {}
             }
-        ]
+        }
     }
 }
 
