@@ -37,16 +37,20 @@ const props = {
                     RULE: "E_UserRE"
                 }
             },
-            checkUserLorPE: {
+            checkUserLorEP: {
                 type: "check",
                 params: {
                     rules: ["login|email", "password"]
+                }, errors: {
+                    q: "E_UserQ",
+                    TYPEOF_RULE: "E_UserTRE",
+                    RULE: "E_UserRE"
                 }
             },
             login: {
                 type: "get",
                 params: {
-                    checkMethod: "checkUserLorPE",
+                    checkMethod: "checkUserLorEP",
                     cacheMethod: "cacheUser",
                     mainMethod: "findUser",
                 }
@@ -68,8 +72,8 @@ const props = {
             register: {
                 type: "post",
                 params: {
-                    checkEquals: ["login", "email"],
-                    checkMethod: "checkUserLorPE",
+                    checkEquals: ["login"],
+                    checkMethod: "checkUserLorEP",
                     cacheMethod: "cacheUser",
                     disableCopies: true
                 },
@@ -119,7 +123,7 @@ const props = {
             putUser: {
                 type: "put",
                 params: {
-                    checkMethod: "checkUserLorPE",
+                    checkMethod: "checkUserLorEP",
                     mainMethod: "findUser",
                     checkEquals: ["login", "email"]
                 },

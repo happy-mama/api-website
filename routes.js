@@ -56,7 +56,6 @@ if (config.api.redirect.custom) {
 }
 
 // GET /web/user/jwt
-
 console.log("/web/user/jwt GET", config.api.get.web_user_jwt)
 if (config.api.get.web_user_jwt) {
 	router.get("/web/user/jwt", (req, res) => {
@@ -133,7 +132,13 @@ if (config.api.post.web_user) {
 		}
 
 		DBH.User.register(req.body.data).then(d => {
-			return res.send(d)
+			
+			DBH.User.postJWTUser(d).then(x => {
+				return res.send({ auth: { login: d.login, email: d.email }, jwt: x })
+			}).catch(e => {
+				return res.send({ "error": e })
+			})
+
 		}).catch(e => {
 			return res.send({ "error": e })
 		})
@@ -343,13 +348,15 @@ if (config.api.get.web_posts) {
 				from: Number
 				to: Number
 			}
+			req.headers.Authorization: String
 		*/
 
 		if (!req.query) {
 			return res.send({ "error": "EBADQUERY" })
 		}
 
-		if (!req.query.thread && !req.query.getLast && !(req.query.from || req.query.to)) {
+		// if (!(req.query.thread && req.query.getLast && (req.query.from && req.query.to))) {
+		if (!(req.query.thread && req.query.getLast && req.headers.authorization)) {
 			return res.send({ "error": "EWRONGQUERY" })
 		}
 
@@ -360,53 +367,58 @@ if (config.api.get.web_posts) {
 			threadPath = DBH[req.query.thread + "_Posts"]
 		}
 
-		if (req.query.getLast) {
+		DBH.User.authJWT(req.headers.authorization).then(User => {
 
-			threadPath.$model.find().sort("createdAt").limit(20).exec().then(async posts => {
+			if (req.query.getLast) {
 
-				let temp = []
+				threadPath.$model.find().sort("createdAt").limit(20).exec().then(async posts => {
 
-				await Promise.all(posts.map(async post => {
+					let temp = []
 
-					let t = {
-						header: post.header,
-						text: post.text,
-						likes: post.likes,
-						comments: post.comments,
-						_id: post._id
-					}
+					await Promise.all(posts.map(async post => {
 
-					if (post.likes) {
-						await DBH.PostsLikes.get({ postId: post._id, authorId: post.authorId }).then(like => {
-
-							t.myLike = true
-
-						}).catch(e => {})
-					}
-
-					await DBH.User.getById(post.authorId).then(Author => {
-
-						delete t.authorId
-						t.author = {
-							login: Author.login,
-							_id: Author._id
+						let t = {
+							header: post.header,
+							text: post.text,
+							likes: post.likes,
+							comments: post.comments,
+							_id: post._id
 						}
 
-						temp.unshift(t)
+						if (post.likes) {
+							await DBH.PostsLikes.get({ postId: post._id, authorId: User._id }).then(like => {
 
-					}).catch(e => {
-						return res.send({ "error": e })
-					})
+								t.myLike = true
 
-				}))
+							}).catch(e => { })
+						}
 
-				return res.send(temp)
-			})
+						await DBH.User.getById(post.authorId).then(Author => {
 
-		} else {
+							delete t.authorId
+							t.author = {
+								login: Author.login,
+								_id: Author._id
+							}
 
-		}
+							temp.unshift(t)
 
+						}).catch(e => {
+							return res.send({ "error": e })
+						})
+
+					}))
+
+					return res.send(temp)
+				})
+
+			} else {
+				return res.send({ "error": "EROUTEISOFF" })
+			}
+
+		}).catch(e => {
+			return res.send({ "error": e })
+		})
 	})
 } else {
 	router.get("/web/posts", (req, res) => {
