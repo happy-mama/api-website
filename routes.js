@@ -58,7 +58,7 @@ if (config.api.post.uf) {
       return res.send({ error: "ENOKEY" });
     }
 
-    if (req.headers.uf_key !== "qweasd123") {
+    if (req.headers.uf_key !== config.secure.FSUploadKey) {
       return res.send({ error: "EWRONGKEY" });
     }
 
