@@ -5,21 +5,7 @@ const config = require("./config.json");
 let DBH = require("hm-dbh");
 const multer = require("multer");
 const upload = multer();
-// {
-//   limits: {
-//     headerPairs: {
-//       Uf_key: "123",
-//     },
-//   },
-//   // storage: {
-//   //   destination: (req, file, cb) => {
-//   //     cb(null, "uf/");
-//   //   },
-//   //   filename: (req, file, cb) => {
-//   //     cb(null, Date.now() + "-" + file.originalname);
-//   //   },
-//   // },
-// });
+const multiparty = require("hm-multiparty");
 
 router.use(express.json());
 
@@ -53,7 +39,7 @@ if (config.api.get.r) {
 // UPLOAD
 console.log("/uf/ POST", config.api.post.uf);
 if (config.api.post.uf) {
-  router.post("/uf/", upload.single("file"), (req, res) => {
+  router.post("/uf/", (req, res) => {
     if (!req.headers.uf_key) {
       return res.send({ error: "ENOKEY" });
     }
@@ -66,27 +52,18 @@ if (config.api.post.uf) {
       req.headers.uf_path = "";
     }
 
-    if (req.headers.uf_path.includes("../")) {
-      return res.send({ error: "EWRONGPATH" });
-    }
+    let form = new multiparty.Form({
+      uploadDir: "./public/",
+      prefixDir: req.headers.uf_path,
+    });
 
-    if (!req.file) {
-      return res.send({ error: "ENOFILE" });
-    }
-
-    fs.writeFile(
-      `./public${req.headers.uf_path}/${req.file.originalname}`,
-      req.file.buffer,
-      {},
-      err => {
-        console.log(err);
-        if (!err) {
-          return res.send("ok");
-        } else {
-          return res.send({ error: "EUNKNOWN" });
-        }
+    form.parse(req, error => {
+      if (error) {
+        res.status(500).end();
+      } else {
+        res.status(200).send("ok");
       }
-    );
+    });
   });
 } else {
   router.post("/uf", (req, res) => {
