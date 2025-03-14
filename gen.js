@@ -187,6 +187,40 @@ const props = {
           main: "E_RedirectURLNF",
         },
       },
+      cache: {
+        type: "cache",
+        params: {},
+        errors: {
+          main: "E_UserNull",
+        },
+      },
+      checkAll: {
+        type: "check",
+        params: {},
+        errors: {
+          q: "E_RedirectQ",
+        },
+      },
+      post: {
+        type: "post",
+        params: {
+          checkEquals: ["key"],
+          checkMethod: "checkAll",
+          cacheMethod: "cache",
+          disableCopies: true,
+        },
+        errors: {
+          disableCopies: "E_RedirectDC",
+          checkEquals: "E_RedirectCE:%equal%",
+        },
+      },
+      delete: {
+        type: "delete",
+        params: {
+          checkMethod: "checkAll",
+          mainMethod: "find",
+        },
+      },
     },
   },
 };

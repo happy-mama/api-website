@@ -6,8 +6,12 @@ let DBH = require("hm-dbh");
 const multer = require("multer");
 const upload = multer();
 const multiparty = require("hm-multiparty");
+const shortUuid = require("short-uuid");
 
 router.use(express.json());
+
+const URLREGEX =
+  /^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)$/;
 
 // REDIRECT
 console.log("/r/:KEY GET", config.api.get.r);
@@ -15,11 +19,13 @@ if (config.api.get.r) {
   router.get("/r/:key", (req, res) => {
     DBH.RedirectURL.get({ key: req.params.key })
       .then(redirectURL => {
-        redirectURL.redirected += 1;
+        if (!req.query.notCount) redirectURL.redirected += 1;
         res.send({
           url: redirectURL.url,
+          key: redirectURL.key,
+          redirected: redirectURL.redirected,
         });
-        redirectURL.save();
+        if (!req.query.notCount) redirectURL.save();
       })
       .catch(e => {
         if (e == "E_RedirectURLNF") {
@@ -31,7 +37,78 @@ if (config.api.get.r) {
       });
   });
 } else {
-  router.get("/r", (req, res) => {
+  router.get("/r/:key", (req, res) => {
+    res.status(500).send({ error: "EROUTEISOFF" });
+  });
+}
+
+console.log("/r POST", config.api.post.r);
+if (config.api.post.r) {
+  router.post("/r", (req, res) => {
+    if (!req.body) return res.status(400).send({ error: "ENOBODY" });
+
+    if (!req.body.url) return res.status(400).send({ error: "EWRONGBODY:url" });
+
+    if (typeof req.body.url != "string")
+      return res.status(400).send({ error: "EWRONGBODYTYPE:url" });
+
+    if (req.body.expiresAt && typeof req.body.expiresAt != "string")
+      return res.status(400).send({ error: "EWRONGBODYTYPE:expiresAt" });
+
+    if (req.body.key) {
+      if (typeof req.body.key != "string")
+        return res.status(400).send({ error: "EWRONGBODYTYPE:key" });
+      if (req.body.key.length == 0 || req.body.key.length > 20)
+        return res.status(400).send({ error: "EWRONGBODYLENGTH:key" });
+    }
+
+    const regexText = req.body.url.match(URLREGEX);
+
+    if (!regexText || (regexText && regexText.length != 1))
+      return res.status(400).send({ error: "EWRONGBODYMATCH:url" });
+
+    DBH.RedirectURL.post({
+      key: req.body.key || shortUuid.generate(),
+      url: req.body.url,
+      redirected: 0,
+    })
+      .then(redirectURL => {
+        res.send({
+          url: redirectURL.url,
+          key: redirectURL.key,
+          redirected: redirectURL.redirected,
+        });
+      })
+      .catch(e => {
+        res.status(400).send({ error: e });
+      });
+  });
+} else {
+  router.post("/r", (req, res) => {
+    res.status(500).send({ error: "EROUTEISOFF" });
+  });
+}
+
+console.log("/r DELETE", config.api.delete.r);
+if (config.api.delete.r) {
+  router.delete("/r", (req, res) => {
+    if (!req.body) return res.status(400).send({ error: "ENOBODY" });
+
+    if (!req.body.key) return res.status(400).send({ error: "EWRONGBODY:key" });
+
+    if (typeof req.body.key != "string")
+      return res.status(400).send({ error: "EWRONGBODYTYPE:key" });
+
+    DBH.RedirectURL.delete({ key: req.body.key })
+      .then(() => {
+        res.send(true);
+      })
+      .catch(e => {
+        res.status(400).send({ error: e });
+      });
+  });
+} else {
+  router.delete("/r", (req, res) => {
     res.status(500).send({ error: "EROUTEISOFF" });
   });
 }
