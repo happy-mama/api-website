@@ -12,9 +12,6 @@ const https = require("https");
 app.use(cors());
 app.use(express.static("./public/"));
 app.use("/", routes.router);
-app.use(function (req, res, next) {
-  next();
-});
 
 app.use(function (req, res) {
   res.send({ error: "EINVALIDROUTE" });
@@ -48,6 +45,6 @@ function startLog() {
   );
 }
 
-process.on("uncaughtException", (error) => {
+process.on("uncaughtException", error => {
   console.log(error);
 });

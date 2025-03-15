@@ -1,13 +1,12 @@
 const express = require("express");
 const fs = require("fs");
-const router = express.Router();
 const config = require("./config.json");
 let DBH = require("hm-dbh");
 const multer = require("multer");
-const upload = multer();
 const multiparty = require("hm-multiparty");
 const shortUuid = require("short-uuid");
 
+const router = express.Router();
 router.use(express.json());
 
 const URLREGEX =
